@@ -72,19 +72,21 @@ def logout_view(request):
 
 #----------------------------------------------- CHIP IN --------------------------------------------------------
 
+# Send login email
 
 @login_required
 def send_login_email(request):
     user = request.user
     subject = 'Logged into LF Project!'
-    message = f'''
-Hi {user.username},
+    message = (
 
-You recently logged into your account. If you don't recognise this action, change your password and contact support immediately.
+        f"Hi {user.username},\n\n"
+        f"You recently logged into your account.\n\n"
+        f"If you don't recognise this action, change your password and contact support immediately.\n\n"
+        f"Regards,\nLF Project"
 
-Regards,
-LF Project
-'''
+    )
+
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
     # Redirect to the next URL if provided, else default to user profile
     next_url = request.GET.get('next', reverse("users:user"))  # Simplified fallback
@@ -120,14 +122,14 @@ def verify_email(request, uidb64, token):
 def send_confirmation_success_email(request):
     user = request.user
     subject = 'Welcome to LF Project!'
-    message = f'''
-Hi {user.username},
 
-Your email has been successfully verified and your account is now active. 
+    message =(
 
-Regards,
-LF Project
-'''
+        f"Hi {user.username},\n\n"
+        f"Your email has been successfully verified and your account is now active.\n\n"
+        f"Regards,\nLF Project"
+
+    )
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
     return redirect('users:user')
 
@@ -159,16 +161,20 @@ def delete_account(request):
             send_mail(
                 subject='Confirm Your Account Deletion',
                 message=(
+
                     f"Hi {user.username},\n\n"
-                    f"Click the link below to confirm deletion of your account:\n\n{confirm_url}\n\n"
-                    f"If you did not request this, you can ignore this email.\n\nRegards,\nLF Project"
+                    f"Click the link below to confirm deletion of your account:\n\n"
+                    f"{confirm_url}\n\n"
+                    f"If you don't recognise this action, change your password and contact support immediately.\n\n"
+                    f"Regards,\nLF Project"
+
                 ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=False,
             )
             messages.info(request, "A confirmation email has been sent to your email address.")
-            return redirect('users:login')  # or any other page
+            return redirect('users:login')
         else:
             messages.error(request, "Incorrect password. Please try again.")
     return render(request, 'users/delete_account.html')
@@ -180,19 +186,24 @@ def confirm_delete_account(request):
     try:
         user_id = signer.unsign(token, max_age=60 * 60)  # token valid for 1 hour
         user = User.objects.get(id=user_id)
+        send_mail(
+            subject='Account Deletion Confirmation',
+            message=(
+
+                f"Hi {user.username},\n\n"
+                f"Your account has been successfully deleted.\n\n"
+                f"If you don't recognise this action, change your password and contact support immediately.\n\n"
+                f"Regards,\nLF Project"
+
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
         user.delete()
         logout(request)
         messages.success(request, "Your account has been deleted.")
         return redirect('users:login')
     except (BadSignature, SignatureExpired, User.DoesNotExist):
         messages.error(request, "Invalid or expired link.")
-        return redirect('users:profile')
-
-def send_deletion_email(user_email, username):
-    send_mail(
-        subject='Account Deletion Confirmation',
-        message=f"Hi {username},\n\nYour account has been successfully deleted.\n\nRegards,\nLF Project",
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user_email],
-        fail_silently=False,
-    )
+        return redirect('users:login')

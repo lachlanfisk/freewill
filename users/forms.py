@@ -48,14 +48,12 @@ class UserRegistrationForm(UserCreationForm):
         link = f"http://localhost:8000/users/verify-email/{uid}/{token}/"
 
         subject = 'Confirm your email address'
-        message = f'''
-Hi {user.username},
+        message =(
 
-Thanks for registering! Please confirm your email address by clicking the link below:
+            f"Hi {user.username},\n\n"
+            f"Thanks for registering! Please confirm your email address by clicking the link below:\n\n"
+            f"{link}\n\n"
+            f"Regards,\nLF Project"
 
-{link}
-
-Regards,
-LF Project
-'''
+        )
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
