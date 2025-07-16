@@ -8,13 +8,14 @@ from .forms import UserRegistrationForm
 import requests
 from django.conf import settings
 
+# Registers user
 
 def register(request):
     if request.method == "POST":
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
-            messages.success(request, "Your account has been created! You can now log in.")
+            messages.success(request, "Please verify your account through the email sent")
             return redirect('users:login')
     else:
         form = UserRegistrationForm()
@@ -23,6 +24,8 @@ def register(request):
 @login_required(login_url='users:login')
 def user(request):
     return render(request, "users/user.html")
+
+# Logs user in
 
 def login_view(request):
     if request.method == "POST":
@@ -55,7 +58,35 @@ def login_view(request):
             messages.error(request, "Invalid username or password.")
     return render(request, "users/login.html")
 
+# Logs user out
+
 def logout_view(request):
     logout(request)
     messages.success(request, "Successfully logged out.")
     return redirect('users:login')
+
+
+#----------------------------------------------- CHIP IN --------------------------------------------------------
+
+
+from django.contrib.auth.models import User
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.http import HttpResponse
+
+# Verify user's email
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return HttpResponse("Your email has been confirmed. You can now log in.")
+    else:
+        return HttpResponse("The confirmation link is invalid or has expired.")

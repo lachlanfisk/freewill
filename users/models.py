@@ -14,24 +14,13 @@ def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, 'profile'):  # Ensure profile exists before trying to save
         instance.profile.save()
 
-def validate_unique_nickname(nickname, instance=None):
-    if instance:
-        # Exclude the current instance from the uniqueness check
-        if Profile.objects.filter(nickname=nickname).exclude(pk=instance.pk).exists():
-            raise ValidationError(f"Nickname '{nickname}' is already taken.")
-    else:
-        if Profile.objects.filter(nickname=nickname).exists():
-            raise ValidationError(f"Nickname '{nickname}' can't be blank.")
+# Nicknames do not need to be unique
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     nickname = models.CharField(max_length=30, unique=True, null=False, blank=False)
 
-    def clean(self):
-        validate_unique_nickname(self.nickname, instance=self)
-
     def save(self, *args, **kwargs):
-        self.clean()
         super().save(*args, **kwargs)    
 
     def __str__(self):
