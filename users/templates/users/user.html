@@ -6,4 +6,6 @@
     <h2>Welcome {{ request.profile.nickname }}</h2>
     <p>This page is for user management functions.</p>
     <a href="{% url 'chipin:home' %}">Click through to ChipIn Functions</a>
+    <p></p>
+    <a href="{% url 'users:delete_account' %}" class="btn btn-danger">Delete Account</a> <!-- Delete Account Page -->
 {% endblock %}

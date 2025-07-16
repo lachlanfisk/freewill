@@ -90,3 +90,19 @@ def verify_email(request, uidb64, token):
         return HttpResponse("Your email has been confirmed. You can now log in.")
     else:
         return HttpResponse("The confirmation link is invalid or has expired.")
+
+# Delete account
+
+@login_required
+def delete_account(request):
+    if request.method == "POST":
+        password = request.POST.get('password') # Verify deletion with password
+        user = request.user
+        user = authenticate(username=user.username, password=password) # Authenticate password
+        if user is not None:
+            request.user.delete()
+            messages.success(request, "Your account has been deleted successfully.")
+            return redirect('users:login')
+        else:
+            messages.error(request, "Incorrect password. Please try again.")
+    return render(request, 'users/delete_account.html')
