@@ -1,0 +1,19 @@
+{% extends 'freewill/base.html' %}
+{% block title %}Transfer Ownership - {{ group.name }}{% endblock %}
+{% block content %}
+<h1>Transfer Ownership for "{{ group.name }}"</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="new_owner_id">Select New Owner:</label>
+    <select name="new_owner_id" required>
+        {% for admin in admin_members %}
+            <option value="{{ admin.user.id }}">{{ admin.user.profile.nickname }}</option>
+        {% endfor %}
+    </select>
+    <br><br>
+    <button type="submit">Transfer Ownership</button>
+</form>
+
+<a href="{% url 'freewill:group_detail' group.id %}">Cancel</a>
+{% endblock %}

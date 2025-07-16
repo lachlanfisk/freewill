@@ -1,8 +1,13 @@
 from django import forms
-from .models import Group
-from .models import Comment
+from .models import Group, Comment, GroupMember
 
 class GroupCreationForm(forms.ModelForm):
+    DEFAULT_ROLE_CHOICES = [
+        ('read', 'Read-Only'),
+        ('comment', 'Comment'),
+    ]
+    default_role = forms.ChoiceField(choices=DEFAULT_ROLE_CHOICES, label="Default Role for Members")
+
     class Meta:
         model = Group
         fields = ['name', 'visibility']
@@ -13,10 +18,10 @@ class GroupCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         group = super().save(commit=False)
-        group.admin = self.user
+        group.owner = self.user
         if commit:
             group.save()
-            group.members.add(self.user)
+            GroupMember.objects.create(user=self.user, group=group, role='owner')  # Creator is admin by default
         return group
     
 

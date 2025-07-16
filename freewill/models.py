@@ -1,18 +1,40 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class Group(models.Model):
-    VISIBILITY_CHOICES = [
-        ('public', 'Public'),         # Anyone can join without request or invite
-        ('invite', 'Invite-Only'),    # Visible, users can request or be invited
-        ('hidden', 'Hidden'),         # Not visible or requestable, invite-only
+class GroupMember(models.Model):
+    ROLE_CHOICES = [
+        ('read', 'Read-Only'),
+        ('comment', 'Comment'),
+        ('admin', 'Admin'),
+        ('owner', 'Owner'),
     ]
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='group_memberships')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='read')
+    banned = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('user', 'group')
+
+class Group(models.Model):
+    VISIBILITY_CHOICES = [
+        ('public', 'Public'),
+        ('invite', 'Invite-Only'),
+        ('hidden', 'Hidden'),
+    ]
+    DEFAULT_ROLE_CHOICES = [
+        ('read', 'Read-Only'),
+        ('comment', 'Comment'),
+    ]
+    
+    default_role = models.CharField(max_length=10, choices=DEFAULT_ROLE_CHOICES, default='read')
     name = models.CharField(max_length=100)
-    admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_groups')
-    members = models.ManyToManyField(User, related_name='group_memberships', blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_groups', default=29)
+    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')
+    members = models.ManyToManyField(User, through='GroupMember')
     invited_users = models.ManyToManyField(User, related_name='pending_invitations', blank=True)
-    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')  # <-- new
+    banned_users = models.ManyToManyField(User, related_name='banned_from_groups', blank=True)
 
     def __str__(self):
         return self.name

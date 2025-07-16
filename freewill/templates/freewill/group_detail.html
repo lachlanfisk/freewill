@@ -2,62 +2,137 @@
 {% block title %}Freewill - {{ group.name }}{% endblock %}
 {% block content %}
     <h1>{{ group.name }}</h1>
-    <p>Administrator: {{ group.admin.profile.nickname }}</p>
+    <p>Owner: {{ group.owner }}</p>
+    <p>Visibility: {{ group.get_visibility_display }}</p>
+    <p>Your role in this group: <strong>{{ user_role|title }}</strong></p>
+
+    <!-- Only the owner can edit settings -->
+    {% if user_role == 'owner' %}
+    <p><a href="{% url 'freewill:group_settings' group.id %}">Edit Group Settings</a></p>
+    {% endif %}
 
     <!-- Only display "Invite Users" link to the group administrator -->
-    {% if request.user == group.admin %}
+    {% if request.user == group.admin or request.user == group.owner %}
         <a href="{% url 'freewill:invite_users' group.id %}">Invite Users</a>
     {% endif %}
 
-    <h2>Members</h2>
-    <ul>
-        {% for member in group.members.all %}
-        <li>{{ member.profile.nickname }}</li>
-        {% endfor %}
-    </ul>
-    <!-- Only list Join Requests for groups of which the current user is a member. -->
+
     {% if request.user in group.members.all %}
-        {% if request.user == group.admin %}
-        <h2>Join Requests</h2>
+
+        <!-- Members list -->
+        <h2>Members</h2>
         <ul>
-            {% for req in group.join_requests.all %}
-            <li>
-                {{ req.user.profile.nickname }} requested to join.
-                <a href="{% url 'freewill:handle_join_request' group.id req.id 'approve' %}">Approve</a> |
-                <a href="{% url 'freewill:handle_join_request' group.id req.id 'reject' %}">Reject</a>
-            </li>
-            {% empty %}
-            <li>No pending join requests.</li>
-            {% endfor %}
+        {% for membership in group_memberships %}
+        <li>
+            {{ membership.user.profile.nickname }}
+
+            {% if membership.role == 'owner' %}
+            <strong>(Owner)</strong>
+
+            {% elif user_role == 'owner' %}
+            <!-- Owner can manage everyone -->
+            <form method="post" action="{% url 'freewill:manage_member_action' group.id membership.user.id %}" style="display:inline;">
+                {% csrf_token %}
+                <select name="role" onchange="this.form.submit()">
+                    <option disabled>-- Select Action --</option>
+                    <option value="read" {% if membership.role == 'read' %}selected{% endif %}>Read</option>
+                    <option value="comment" {% if membership.role == 'comment' %}selected{% endif %}>Comment</option>
+                    <option value="admin" {% if membership.role == 'admin' %}selected{% endif %}>Admin</option>
+                    <option value="kick">Kick</option>
+                    <option value="ban">Ban</option>
+                </select>
+            </form>
+
+            {% elif membership.role == 'admin' %}
+            <span>(Admin)</span>
+
+            {% elif user_role == 'admin' %}
+            <!-- Admin can manage read/comment users -->
+            <form method="post" action="{% url 'freewill:manage_member_action' group.id membership.user.id %}" style="display:inline;">
+                {% csrf_token %}
+                <select name="role" onchange="this.form.submit()">
+                    <option disabled>-- Select Action --</option>
+                    <option value="read" {% if membership.role == 'read' %}selected{% endif %}>Read</option>
+                    <option value="comment" {% if membership.role == 'comment' %}selected{% endif %}>Comment</option>
+                    <option value="kick">Kick</option>
+                    <option value="ban">Ban</option>
+                </select>
+            </form>
+
+            {% else %}
+            <span>({{ membership.role|title }})</span>
+            {% endif %}
+        </li>
+        {% endfor %}
         </ul>
+
+        {% if request.user == group.admin or request.user == group.owner %}
+            {% if banned_users %}
+            <h2>Banned Users</h2>
+                <ul>
+                {% for banned in banned_users %}
+                    <li>
+                        {{ banned.profile.nickname }}
+                        <a href="{% url 'freewill:manage_member_action' group.id banned.id %}?action=unban" onclick="return confirm('Unban {{ banned.profile.nickname }}?');">Unban</a>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            </ul>
+            <!-- Only list Join Requests for groups of which the current user is a member. -->
+            <h2>Join Requests</h2>
+            <ul>
+                {% for req in group.join_requests.all %}
+                <li>
+                    {{ req.user.profile.nickname }} requested to join.
+                    <a href="{% url 'freewill:handle_join_request' group.id req.id 'approve' %}">Approve</a> |
+                    <a href="{% url 'freewill:handle_join_request' group.id req.id 'reject' %}">Reject</a>
+                </li>
+                {% empty %}
+                <li>No pending join requests.</li>
+                {% endfor %}
+            </ul>
         {% endif %}
         <h2>Group Chat</h2>
-    <!-- Display existing comments -->
-    <div class="comments-section">
-        {% for comment in comments %}
-            <div class="comment">
-                <p><strong>{{ comment.user.profile.nickname }}</strong>: {{ comment.content }}</p>
-                <small>Posted on {{ comment.created_at }}</small>
-                <!-- Allow the comment owner or admin to edit or delete -->
-                {% if comment.user == request.user or request.user == group.admin %}
-                    <a href="{% url 'freewill:edit_comment' group.id comment.id %}">Edit</a>
-                    <a href="{% url 'freewill:delete_comment' comment.id %}" onclick="return confirm('Are you sure?')">Delete</a>
-                {% endif %}
-            </div>
-        {% empty %}
-            <p>No comments yet. Be the first to comment!</p>
-        {% endfor %}
-    </div>
-
-    <!-- Comment form (used for both new comments and editing existing comments) -->
-    <h3>{% if comment_to_edit %}Edit Comment{% else %}Add a comment{% endif %}</h3>
-    <form method="POST">
-        {% csrf_token %}
-        <div class="form-group">
-            {{ form.content.errors }}
-            {{ form.content }}
+        <!-- Display existing comments -->
+        <div class="comments-section">
+            {% for comment in comments %}
+                <div class="comment">
+                    <p><strong>{{ comment.user.profile.nickname }}</strong>: {{ comment.content }}</p>
+                    <small>Posted on {{ comment.created_at }}</small>
+                    <!-- Allow the comment owner or admin to edit or delete -->
+                    {% if comment.user == request.user %}
+                        <a href="{% url 'freewill:edit_comment' group.id comment.id %}">Edit</a>
+                    {% endif %}
+                    {% if comment.user == request.user or request.user == group.admin or request.user == group.owner %}
+                        <a href="{% url 'freewill:delete_comment' comment.id %}" onclick="return confirm('Are you sure?')">Delete</a>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p>No comments yet. Be the first to comment!</p>
+            {% endfor %}
         </div>
-        <button type="submit">{% if comment_to_edit %}Save Comment{% else %}Post Comment{% endif %}</button>
-    </form>
+
+        {% if user_role != 'read' %}
+            <!-- Comment form (used for both new comments and editing existing comments) -->
+            <h3>{% if comment_to_edit %}Edit Comment{% else %}Add a comment{% endif %}</h3>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    {{ form.content.errors }}
+                    {{ form.content }}
+                </div>
+                <button type="submit">{% if comment_to_edit %}Save Comment{% else %}Post Comment{% endif %}</button>
+            </form>
+        {% endif %}
+        {% if request.user == group.owner %}
+            <a href="{% url 'freewill:transfer_ownership' group.id %}" onclick="return confirm('Are you sure you want to transfer ownership of this group?');">Transfer Ownership</a>
+            <p></p>
+        {% endif %}
+        {% if group.owner == request.user %}
+            <a href="{% url 'freewill:delete_group' group.id %}" onclick="return confirm('Are you sure you want to delete this group?');">Delete</a>
+        {% else %}
+            <a href="{% url 'freewill:leave_group' group.id %}" onclick="return confirm('Are you sure you want to leave this group?');">Leave</a>
+        {% endif %}
     {% endif %}
 {% endblock %}

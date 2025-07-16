@@ -5,14 +5,9 @@
     <h1>FreeWill</h1>
     <h2>Your Groups</h2>
     <ul>
-        {% for group in user.group_memberships.all %}
+        {% for group in user_groups %}
         <li>
             <a href="{% url 'freewill:group_detail' group.id %}">{{ group.name }}</a>
-            {% if group.admin == request.user %}
-                <a href="{% url 'freewill:delete_group' group.id %}" onclick="return confirm('Are you sure you want to delete this group?');">Delete</a>
-            {% else %}
-                <a href="{% url 'freewill:leave_group' group.id %}" onclick="return confirm('Are you sure you want to leave this group?');">Leave</a>
-            {% endif %}
         </li>
         {% empty %}
         <li>You are not a member of any group yet.</li>
@@ -51,7 +46,8 @@
                 {% for group in pending_invitations %}
                     <li>
                         You have been invited to join <strong>{{ group.name }}</strong>.
-                        <a href="{% url 'freewill:accept_invite' group.id %}?user_id={{ request.user.id }}">Accept</a>
+                            <a href="{% url 'freewill:respond_to_invite' group.id %}?user_id={{ request.user.id }}&action=accept">Accept</a>
+                            <a href="{% url 'freewill:respond_to_invite' group.id %}?user_id={{ request.user.id }}&action=deny">Deny</a>
                     </li>
                 {% empty %}
                     <li>No pending group invitations.</li>
