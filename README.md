@@ -1,0 +1,1 @@
+WARNING, WILL NOT FUNCTION WITHOUT "G:\software\freewill\.env"
