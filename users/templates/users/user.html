@@ -2,31 +2,87 @@
 {% load static %}
 {% block title %}FreeWill Users - Account{% endblock %}
 
-{% block content %} 
-    <h2>Welcome {{ request.profile.nickname }}</h2>
-    <p>This page is for user management functions.</p>
-    <a href="{% url 'freewill:home' %}">Click through to FreeWill</a>
-    <form method="post">
+{% block content %}
+<div class="wrapper">
+    <h1 class="supertitle">Account</h1>
+    <div class="wide-card">
+        <h2 class="title">Your Join Requests</h2>
+        {% for join_request in user_join_requests %}
+        <div class="threeway-card">
+            <div class="threeway-row">
+                <div class="threeway-name">
+                    <a class="threeway-username">Name: {{ join_request.group.name }}</a>
+                    <a class="threeway-nickname">Nickname: {{ join_request.group.name }}</a>
+                </div>
+                <div class="threeway-info">
+                    <a>Time: {{ join_request.created_at|date:"Y-m-d h:i a" }}</a>
+                </div>
+                <div class="threeway-actions">
+                    <a href="{% url 'freewill:delete_join_request' join_request.id %}" 
+                    class="app-button full-width danger" 
+                    onclick="return confirm('Are you sure you want to delete this join request?');">
+                        Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+            <a class="center">You have not submitted any join requests.</a>
+        {% endfor %}
+    </div>
+    <!--Profile Edit-->
+    <div class="wide-card">
+        <h2 class="title">Edit Profile Info</h2>
+        <form method="post">
         {% csrf_token %}
-        <h3>Edit Info</h3>
-    <form method="post">
+        {% for field in user_form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="danger">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        {% for field in profile_form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="danger">{{ field.errors }}</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+            <button type="submit" name="update_profile" class="app-button full-width">Update Profile</button>
+        </form>
+        <a>Account Created: {{ created_at }}</a>
+    </div>
+    <!--Email Change-->
+    <div class="wide-card">
+        <h2 class="title">Change Email</h2>
+        <div class="detail-line">
+            <a>Current Email: {{ request.user.email }}</a>
+        </div>
+        <form method="post">
         {% csrf_token %}
-        {{ user_form.as_p }}
-        {{ profile_form.as_p }}
-        <button type="submit" name="update_profile">Update Profile</button>
-    </form>
-    <p></p>
-    <body>Email Address: {{ request.user.email }}</body>
-    <form method="post">
-        {% csrf_token %}
-        {{ email_form.as_p }}
-        <button type="submit" name="change_email">Request Email Change</button>
-    </form>
-    <form method="post">
-        {% csrf_token %}
-        {{ password_form.as_p }}
-        <button type="submit" name="change_password">Change Password</button>
-    <p><strong>Account Created:</strong> {{ created_at }}</p>
-    </form>
-    <a href="{% url 'users:delete_account' %}" class="btn btn-danger">Delete Account</a> <!-- Delete Account Page -->
+        {% for field in email_form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+            </div>
+        {% endfor %}
+            <button type="submit" name="change_email" class="app-button full-width">Request Email Change</button>
+        </form>
+    </div>
+    <!--Password Change-->
+    <div class="wide-card">
+        <h2 class="title">Change Password</h2>  
+        <a href="{% url 'users:change_password' %}" class="app-button full-width">Change Password</a>
+    </div>
+    <!--Danger Zone === -->
+    <div class="wide-card danger-card">
+        <h2 class="danger-title">Danger Zone</h2>
+        <a href="{% url 'users:delete_account' %}" class="app-button full-width danger">Delete Account</a>
+    </div>
+</div>
 {% endblock %}

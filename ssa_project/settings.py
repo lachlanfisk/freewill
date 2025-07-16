@@ -62,6 +62,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'freewill.context_processors.user_profile',
+                'freewill.context_processors.pending_invitations'
             ],
         },
     },
@@ -112,11 +113,18 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-STATIC_URL = 'static/'
+STATIC_URL = '/freewill/static/'
 
+# Optional: if you want a global static folder outside apps
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "freewill/static"),
+]
+
+# For production (collectstatic target)
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

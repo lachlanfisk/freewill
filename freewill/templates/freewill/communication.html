@@ -1,0 +1,57 @@
+{% extends 'freewill/base.html' %}
+{% load static %}
+{% block title %}FreeWill Social - {{ group.name }} - Communications{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+<h1 class="supertitle">{{ group.name }} - Communications</h1>
+    <div class="wide-card">
+    {% if user_role != 'read' %}
+        <h2 class="title">{% if comment_to_edit %}Edit Comment{% else %}Add a Comment{% endif %}</h2>
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.content.errors }}
+            {{ form.content }}
+            <button type="submit" class="app-button full-width">
+                {% if comment_to_edit %}Save Comment{% else %}Post Comment{% endif %}
+            </button>
+        </form>
+        <a href="{% url 'freewill:group_detail' group.id %}" class="app-button full-width">Back to group</a> 
+    {% endif %}
+    </div>
+    <div class="wide-card">
+        <h2 class="title">Group Chat</h2>
+    {% for comment in comments %}
+        <div class="comment-card">
+            <div class="comment-row">
+                <div class="comment-name">
+                    <a class="comment-username">{{ comment.user.username }}</a>
+                    {% if comment.user.profile.nickname %}
+                        <a class="comment-nickname">{{ comment.user.profile.nickname }}</a>
+                    {% endif %}
+                </div>
+                <div class="comment-content">
+                    <a>{{ comment.content }}</a>
+                </div>
+                <div class="comment-actions">
+                    <a class="comment-time">{{ comment.created_at|date:"h:i a d-m-y" }}</a>
+                    {% if comment.user == request.user or request.user == group.admin or request.user == group.owner %}
+                    <div class="button-row">
+                    {% if comment.user == request.user %}
+                        <a class="app-button" href="{% url 'freewill:edit_comment' group.id comment.id %}">Edit</a>
+                    {% endif %}
+                        <a class="app-button danger"
+                        href="{% url 'freewill:delete_comment' comment.id %}"
+                        onclick="return confirm('Are you sure you want to delete this comment?');">Delete</a>
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% empty %}
+        No comments yet. Be the first to comment!
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}

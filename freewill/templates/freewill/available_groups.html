@@ -1,0 +1,43 @@
+{% extends 'freewill/base.html' %}
+{% load static %}
+{% block title %}FreeWill Social - Browse Groups{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    <h1 class="supertitle">Browse Available Groups</h1>
+    <div class="wide-card">
+    {% if available_groups %}
+    <!--Search-->
+        <form method="get">
+            <input type="text" name="search" class="form-input" placeholder="Search available groups by name..." value="{{ request.GET.search }}">
+        </form>
+    {% for group in available_groups %}
+        <!--Available Groups List-->
+        <div class="threeway-card">
+            <div class="threeway-row">
+                <div class="threeway-name">
+                    <a class="threeway-username">Name: {{ group.name }}</a>
+                    {% if group.nickname %}
+                        <a class="threeway-nickname">Nickname: {{ group.nickname }}</a>
+                    {% endif %}
+                </div>
+                <div class="threeway-info">
+                    <a>Owner: {{ group.owner.username }}</a>
+                    <a>Visibility: {{ group.get_visibility_display }}</a>
+                </div>
+                <div class="threeway-actions">
+                {% if group.visibility == 'public' %}
+                    <a href="{% url 'freewill:join_public_group' group.id %}" class="app-button full-width">Join Group</a>
+                {% elif group.visibility == 'invite' %}
+                    <a href="{% url 'freewill:request_to_join_group' group.id %}" class="app-button full-width">Request to Join</a>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+    {% else %}
+        No groups available to join at the moment. Go to "Create Group" to create a Group.
+    {% endif %}
+</div>
+{% endblock %}

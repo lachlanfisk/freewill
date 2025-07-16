@@ -1,4 +1,12 @@
 from users.models import Profile
+from .models import GroupInvitation
+
+def pending_invitations(request):
+    if request.user.is_authenticated:
+        invites = GroupInvitation.objects.filter(invited_user=request.user)
+        return {'pending_invitations': invites}
+    return {}
+
 def user_profile(request):
     if request.user.is_authenticated:
         try:

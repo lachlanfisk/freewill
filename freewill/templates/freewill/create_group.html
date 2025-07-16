@@ -1,11 +1,20 @@
 {% extends 'freewill/base.html' %}
+{% load static %}
 {% block title %}FreeWill Social - Create a New Group{% endblock %}
+
 {% block content %}
-    <h1>Create a New Group</h1>
-    <form method="post">
+<div class="wrapper">
+    <!--Create New Group-->
+    <div class="wide-card">
+        <h2 class="title">Create a New Group</h2>
+        <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Create Group</button>
-    </form>
-    <a href="{% url 'freewill:home' %}">Back to Homepage</a>
+            {{ form.as_p }}
+            <button type="submit" class="app-button full-width">Create Group</button>
+        </form>
+        <div class="extra-links">
+            <a href="{% url 'freewill:home' %}" class="app-button full-width">Back to Homepage</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

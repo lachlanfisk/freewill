@@ -1,5 +1,8 @@
 from .models import GroupLog
 from django.utils.timezone import now
+from django.core.mail import send_mail
+from users.utils import get_client_ip
+from django.conf import settings
 
 def log_event(group, user, event_type, message=""):
     GroupLog.objects.create(
@@ -8,4 +11,50 @@ def log_event(group, user, event_type, message=""):
         event_type=event_type,
         message=message,
         timestamp=now().strftime("%Y-%m-%d %H:%M:%S %Z"),
+    )
+
+def send_transfer_ownership_email(user, request, group):
+    ip = get_client_ip(request)
+    user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
+    timestamp = now().strftime("%Y-%m-%d %H:%M:%S %Z")
+    subject = 'Logged into FreeWill'
+    message = (
+        f"Hi {user.username},\n\n"
+        f"You recently transferred ownership of group {group.name}.\n\n"
+        f"Here are the details of the request:\n"
+        f"- IP Address: {ip}\n"
+        f"- Time: {timestamp}\n"
+        f"- Device/Browser: {user_agent}\n\n"
+        f"If you don't recognise this action, change your password and contact support immediately.\n\n"
+        f"Regards,\nFreeWill Social"
+    )
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
+    )
+
+def send_delete_group_email(user, request, group):
+    ip = get_client_ip(request)
+    user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
+    timestamp = now().strftime("%Y-%m-%d %H:%M:%S %Z")
+    subject = 'Deleted a group'
+    message = (
+        f"Hi {user.username},\n\n"
+        f"You recently deleted group {group.name}.\n\n"
+        f"Here are the details of the request:\n"
+        f"- IP Address: {ip}\n"
+        f"- Time: {timestamp}\n"
+        f"- Device/Browser: {user_agent}\n\n"
+        f"If you don't recognise this action, change your password and contact support immediately.\n\n"
+        f"Regards,\nFreeWill Social"
+    )
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        fail_silently=False,
     )

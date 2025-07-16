@@ -1,19 +1,29 @@
 {% extends 'freewill/base.html' %}
+{% load static %}
 {% block title %}FreeWill Social - {{ group.name }} - Transfer Ownership{% endblock %}
+
 {% block content %}
-<h1>Transfer Ownership for "{{ group.name }}"</h1>
-
-<form method="post">
-    {% csrf_token %}
-    <label for="new_owner_id">Select New Owner:</label>
-    <select name="new_owner_id" required>
-        {% for admin in admin_members %}
-            <option value="{{ admin.user.id }}">{{ admin.user.profile.nickname }}</option>
-        {% endfor %}
-    </select>
-    <br><br>
-    <button type="submit">Transfer Ownership</button>
-</form>
-
-<a href="{% url 'freewill:group_detail' group.id %}">Cancel</a>
+<div class="wrapper">
+    <!--Transfer Ownership-->
+    <div class="wide-card danger-card">
+        <h2 class="title danger-title">{{ group.name }} - Transfer Ownership</h2>
+        <form method="post">
+            {% csrf_token %}
+            <a class="danger">Select New Owner:</a>
+            <select name="new_owner_id" id="new_owner_id" required class="danger-select">
+            {% for admin in admin_members %}
+                <option value="{{ admin.user.id }}">{{ admin.user.profile.nickname }}</option>
+            {% endfor %}
+            </select>
+            <label class="danger" for="password">Confirm your password:</label>
+            <input type="password" name="password" class="danger-input" required>
+            <div>
+                <button type="submit" class="app-button full-width danger">Transfer Ownership</button>
+            </div>
+        </form>
+        <div>
+            <a href="{% url 'freewill:group_detail' group.id %}" class="app-button full-width">Cancel</a>
+        </div>
+    </div>
+</div>
 {% endblock %}

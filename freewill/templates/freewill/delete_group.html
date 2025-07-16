@@ -1,0 +1,20 @@
+{% extends 'freewill/base.html' %}
+{% load static %}
+{% block title %}FreeWill - {{ group.name }} - Delete{% endblock %}
+
+{% block content %}
+<div class="wrapper">
+    <!--Delete Group-->
+    <div class="card danger-card">
+        <h2 class="title danger-title">{{ group.name }} - Delete</h2>
+        <h3 class="danger-subtitle">Are you sure you want to permanently delete the group {{ group.name }}? This action cannot be undone.</h3>
+        <form method="post">
+        {% csrf_token %}
+            <a for="password" class="danger">Enter your password to confirm:</a>
+            <input type="password" name="password" class="danger-input" required>
+            <button type="submit" class="app-button full-width danger">Confirm Delete</button>
+        </form>
+        <a href="{% url 'freewill:group_detail' group.id %}" class="app-button full-width">Cancel</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,12 +1,34 @@
 {% extends 'freewill/base.html' %}
 {% load static %}
 {% block title %}FreeWill Users - Register{% endblock %}
+
 {% block content %}
-    <h1>Register for FreeWill</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register</button>
-    </form>
-    <p>Already have an account? <a href="{% url 'users:login' %}">Login</a></p>
+<div class="wrapper">
+    <div class="card">
+        <h2 class="title">Register for FreeWill</h2>
+        <!--Register-->
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <div class="danger">{{ field.errors|striptags }}</div>
+            {% endif %}
+            {% endfor %}
+            <button type="submit" class="app-button full-width">Register</button>
+        </form>
+        <div>
+            <a class="app-button full-width" href="{% url 'users:login' %}">Already have an account? Login</a>
+        </div>
+    {% if messages %}
+        <!--Messages-->
+        <div class="messages">
+        {% for message in messages %}
+            <a {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+        </div>
+    {% endif %}
+    </div>
+</div>
 {% endblock %}

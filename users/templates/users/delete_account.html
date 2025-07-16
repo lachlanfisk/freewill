@@ -3,12 +3,22 @@
 {% block title %}FreeWill Users - Delete Account{% endblock %}
 
 {% block content %}
-<form method="POST">
-    {% csrf_token %}
-    <h2>Are you sure you want to delete your account?</h2>
-    <label for="password">Enter your password to confirm deletion:</label> <!-- Password confirmation -->
-    <input type="password" name="password" id="password" required>
-    <button type="submit" class="btn btn-danger">Yes, Delete My Account</button>
-</form>
-<a href="{% url 'users:user' %}">Cancel</a> <!-- Cancel button -->
+<div class="wrapper">
+    <!--Delete Account-->
+    <div class="card danger-card">
+        <h2 class="title danger-title">DANGER ZONE - Delete Account</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <h3 class="danger-subtitle">
+                Warning. Are you sure you want to delete your account? You cannot undo this action. Any groups you own will be deleted.
+            </h3>
+            <label for="password" class="danger">Enter your password to confirm:</a>
+            <input type="password" name="password" id="password" class="form-input danger-input" required>
+            <a href="{% url 'users:user' %}" class="app-button full-width">Cancel</a>
+            <button type="submit" class="app-button full-width danger">
+                Yes, Delete My Account
+            </button>
+        </form>
+    </div>
+</div>
 {% endblock %}

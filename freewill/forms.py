@@ -10,7 +10,7 @@ class GroupCreationForm(forms.ModelForm):
 
     class Meta:
         model = Group
-        fields = ['name', 'visibility']
+        fields = ['name', 'nickname', 'visibility']  # <-- added nickname
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -18,7 +18,7 @@ class GroupCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         group = super().save(commit=False)
-        is_new = group.pk is None  # True iSf this is a new group
+        is_new = group.pk is None
 
         group.owner = self.user
         if commit:
@@ -26,7 +26,6 @@ class GroupCreationForm(forms.ModelForm):
             if is_new:
                 GroupMember.objects.create(user=self.user, group=group, role='owner')
         return group
-    
 
 
 class CommentForm(forms.ModelForm):

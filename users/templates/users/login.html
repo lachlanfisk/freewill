@@ -1,27 +1,44 @@
 {% extends 'FreeWill/base.html' %}
 {% load static %}
 {% block title %}FreeWill Users - Login{% endblock %}
+
 {% block content %}
-    <div class="login-container">
+<div class="wrapper">
+    <!--Login-->
+    <div class="card">
+        <h2 class="title">Login to FreeWill</h2>
         <form id="login-form" action="{% url 'users:login' %}" method="post" onsubmit="return executeRecaptcha();">
             {% csrf_token %}
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
+            <input class="form-input" type="text" name="username" placeholder="Username" required>
+            <input class="form-input" type="password" name="password" placeholder="Password" required>
             <input type="hidden" name="recaptcha-token" id="recaptcha-token">
-            <button type="submit">Login</button>
+            <button type="submit" class="app-button full-width">Login</button>
         </form>
+        <div class="button-row">
+            <a class="app-button" href="{% url 'users:register' %}">Register</a>
+            <a class="app-button" href="{% url 'password_reset' %}">Forgot Password?</a>
+        </div>
+    {% if messages %}
+        <!--Messages-->
+        <div class="messages">
+        {% for message in messages %}
+            <a {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+        </div>
+    {% endif %}
     </div>
-    <a href="{% url 'password_reset' %}">Forgot Password?</a>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LeMRm4qAAAAADD-PhyZEaZz2nWI4DMYqeYw43uP"></script>
-    <script>
-        function executeRecaptcha() {
-            grecaptcha.ready(function() {
-                grecaptcha.execute('6LeMRm4qAAAAADD-PhyZEaZz2nWI4DMYqeYw43uP', { action: 'submit' }).then(function(token) {
-                    document.getElementById('recaptcha-token').value = token;
-                    document.getElementById('login-form').submit();
-                });
+</div>
+
+<script src="https://www.google.com/recaptcha/api.js?render=6LeMRm4qAAAAADD-PhyZEaZz2nWI4DMYqeYw43uP"></script>
+<script>
+    function executeRecaptcha() {
+        grecaptcha.ready(function() {
+            grecaptcha.execute('6LeMRm4qAAAAADD-PhyZEaZz2nWI4DMYqeYw43uP', { action: 'submit' }).then(function(token) {
+                document.getElementById('recaptcha-token').value = token;
+                document.getElementById('login-form').submit();
             });
-            return false;  // Prevent default form submission
-        }
-    </script>
+        });
+        return false;
+    }
+</script>
 {% endblock %}

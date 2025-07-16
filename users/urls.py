@@ -10,4 +10,5 @@ urlpatterns = [
     path('email/confirm/<uidb64>/<token>/', views.confirm_email_change, name='confirm_email_change'),
     path('delete_account/', views.delete_account, name='delete_account'),
     path('confirm-delete/', views.confirm_delete_account, name='confirm_delete_account'),
+    path('change-password/', views.change_password_view, name='change_password'),
 ]

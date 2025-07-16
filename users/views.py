@@ -22,6 +22,7 @@ from .utils import (
     send_delete_account_email,
     send_delete_account_success_email
 )
+from freewill.models import GroupJoinRequest
 import requests
 
 # Registers user
@@ -101,7 +102,6 @@ def login_view(request):
 # Account page
 
 @login_required
-@login_required
 def user(request):
     user = request.user
     profile = user.profile
@@ -176,12 +176,15 @@ def user(request):
         password_form = PasswordChangeForm(user)
         email_form = EmailChangeForm()
 
+    # Get join requests
+    user_join_requests = GroupJoinRequest.objects.filter(user=user)
     context = {
         'user_form': user_form,
         'profile_form': profile_form,
         'password_form': password_form,
         'email_form': email_form,
         'created_at': user.date_joined,
+        'user_join_requests': user_join_requests,
     }
     return render(request, 'users/user.html', context)
 
@@ -217,6 +220,22 @@ def confirm_email_change(request, uidb64, token):
         messages.error(request, "Invalid or expired confirmation link.")
 
     return redirect('users:user')
+
+# Change Password
+
+@login_required
+def change_password_view(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Prevent logout
+            messages.success(request, "Your password has been changed successfully.")
+            return redirect('users:user')  # or wherever you want to redirect after
+    else:
+        form = PasswordChangeForm(user=request.user)
+    
+    return render(request, 'users/change_password.html', {'form': form})
 
 # Delete account request
 

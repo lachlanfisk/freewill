@@ -1,43 +1,57 @@
 {% extends 'freewill/base.html' %}
+{% load static %}
 {% block title %}FreeWill Social - {{ group.name }} - Logs{% endblock %}
+
 {% block content %}
-<h1>Group Logs for {{ group.name }}</h1>
-
-<form method="get">
-    <label>User:
-        <select name="user">
-            <option value="">All</option>
-            {% for user in users %}
-                <option value="{{ user.id }}" {% if user.id|stringformat:"s" == selected_user %}selected{% endif %}>
-                    {{ user.profile.nickname }}
-                </option>
-            {% endfor %}
-        </select>
-    </label>
-
-    <label>Event:
-        <select name="event">
-            <option value="">All</option>
-            {% for key, label in event_choices %}
-                <option value="{{ key }}" {% if key == selected_event %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-    </label>
-
-    <button type="submit">Filter</button>
-</form>
-
-<ul>
+<div class="wrapper">
+<h1 class="supertitle">{{ group.name }} - Logs</h1>
+    <div class="wide-card">
+        <h2 class="title">Filter Logs</h2>
+        <!--Search-->
+        <form method="get">
+            <label>User:
+                <select name="user">
+                    <option value="">All</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}" {% if user.id|stringformat:"s" == selected_user %}selected{% endif %}>
+                        {{ user.profile.nickname }}
+                    </option>
+                {% endfor %}
+                </select>
+            </label>
+            <label>Event:
+                <select name="event">
+                    <option value="">All</option>
+                {% for key, label in event_choices %}
+                    <option value="{{ key }}" {% if key == selected_event %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+                </select>
+            </label>
+            <button type="submit" class="app-button full-width">Filter</button>
+        </form>
+        <a href="{% url 'freewill:group_detail' group.id %}" class="app-button full-width">Back to group</a> 
+    </div>
+    <div class="wide-card">
+        <h2 class="title">Logs</h2>
     {% for log in logs %}
-        <li>
-            [{{ log.timestamp|date:"Y-m-d H:i" }}] 
-            {% if log.user %}<strong>{{ log.user.profile.nickname }}</strong>{% endif %}
-            - {{ log.message }}
-        </li>
-    {% empty %}
-        <li>No log entries found.</li>
+        <!--Logs-->
+        <div class="threeway-card">
+            <div class="threeway-row">
+                <div class="threeway-name">
+                {% if log.user %}
+                    <a class="threeway-username">Username {{ log.user.username }}</a>
+                    <a class="threeway-nickname">Nickname {{ log.user.profile.nickname }}</a>
+                {% endif %}
+                </div>
+                <div class="threeway-info">
+                    <a>{{ log.message }}</a>
+                </div>
+                <div class="threeway-info">
+                    <a>Time: {{ log.timestamp|date:"Y-m-d h:i a" }}</a>
+                </div>
+            </div>
+        </div>
     {% endfor %}
-</ul>
-
-<a href="{% url 'freewill:group_detail' group.id %}">Back to group</a>
+    </div>
+</div>
 {% endblock %}

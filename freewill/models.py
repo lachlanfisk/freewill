@@ -19,8 +19,8 @@ class GroupMember(models.Model):
 
 class Group(models.Model):
     VISIBILITY_CHOICES = [
-        ('public', 'Public'),
-        ('invite', 'Invite-Only'),
+        ('public', 'Open'),
+        ('invite', 'Closed'),
         ('hidden', 'Hidden'),
     ]
     DEFAULT_ROLE_CHOICES = [
@@ -33,11 +33,20 @@ class Group(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_groups', default=29)
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')
     members = models.ManyToManyField(User, through='GroupMember')
-    invited_users = models.ManyToManyField(User, related_name='pending_invitations', blank=True)
     banned_users = models.ManyToManyField(User, related_name='banned_from_groups', blank=True)
+    nickname = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
         return self.name
+
+class GroupInvitation(models.Model):
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='invitations')
+    invited_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_invites')
+    inviter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_group_invites')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.invited_user} invited to {self.group} by {self.inviter}"
 
 class GroupJoinRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -61,11 +70,13 @@ class GroupLog(models.Model):
         ('created', 'Group Created'),
         ('joined', 'User Joined'),
         ('left', 'User Left'),
+        ('comment_posted', 'Comment Posted'),
         ('comment_edited', 'Comment Edited'),
         ('comment_deleted', 'Comment Deleted'),
         ('invited', 'User Invited'),
         ('invite_accepted', 'Invite Accepted'),
         ('invite_denied', 'Invite Denied'),
+        ('invite_deleted', "Invite Deleted"),
         ('join_requested', 'Join Requested'),
         ('join_request_deleted', 'Join Request Deleted'),
         ('join_request_accepted', 'Join Request Accepted'),
