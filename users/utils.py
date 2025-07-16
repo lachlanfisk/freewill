@@ -23,7 +23,7 @@ def send_confirmation_email(user):
         f"Hi {user.username},\n\n"
         f"Thanks for registering! Please confirm your email address by clicking the link below:\n\n"
         f"{link}\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -36,11 +36,11 @@ def send_confirmation_email(user):
 # Send confirmation success email
 
 def send_confirmation_success_email(user):
-    subject = 'Welcome to LF Project!'
+    subject = 'Welcome to FreeWill!'
     message =(
         f"Hi {user.username},\n\n"
         f"Your email has been successfully verified and your account is now active.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -56,7 +56,7 @@ def send_login_email(user, request):
     ip = get_client_ip(request)
     user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
     timestamp = now().strftime("%Y-%m-%d %H:%M:%S %Z")
-    subject = 'Logged into LF Project'
+    subject = 'Logged into FreeWill'
     message = (
         f"Hi {user.username},\n\n"
         f"You recently logged into your account.\n\n"
@@ -65,7 +65,7 @@ def send_login_email(user, request):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -94,7 +94,7 @@ def send_profile_update_email(user, request, changes):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -125,7 +125,7 @@ def send_email_change_email(user, request, new_email):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -150,7 +150,7 @@ def send_email_change_success_email(user, request, new_email):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -175,7 +175,7 @@ def send_password_change_email(user, request):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -205,7 +205,7 @@ def send_delete_account_email(user, request):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,
@@ -232,7 +232,7 @@ def send_delete_account_success_email(token, request):
         f"- Time: {timestamp}\n"
         f"- Device/Browser: {user_agent}\n\n"
         f"If you don't recognise this action, change your password and contact support immediately.\n\n"
-        f"Regards,\nLF Project"
+        f"Regards,\nFreeWill Users"
     )
     send_mail(
         subject,

@@ -2,10 +2,17 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Group(models.Model):
+    VISIBILITY_CHOICES = [
+        ('public', 'Public'),         # Anyone can join without request or invite
+        ('invite', 'Invite-Only'),    # Visible, users can request or be invited
+        ('hidden', 'Hidden'),         # Not visible or requestable, invite-only
+    ]
+
     name = models.CharField(max_length=100)
     admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_groups')
     members = models.ManyToManyField(User, related_name='group_memberships', blank=True)
     invited_users = models.ManyToManyField(User, related_name='pending_invitations', blank=True)
+    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')  # <-- new
 
     def __str__(self):
         return self.name

@@ -1,0 +1,65 @@
+{% extends 'freewill/base.html' %}
+{% load static %}
+{% block title %}Freewill - Home{% endblock %}
+{% block content %}
+    <h1>FreeWill</h1>
+    <h2>Your Groups</h2>
+    <ul>
+        {% for group in user.group_memberships.all %}
+        <li>
+            <a href="{% url 'freewill:group_detail' group.id %}">{{ group.name }}</a>
+            {% if group.admin == request.user %}
+                <a href="{% url 'freewill:delete_group' group.id %}" onclick="return confirm('Are you sure you want to delete this group?');">Delete</a>
+            {% else %}
+                <a href="{% url 'freewill:leave_group' group.id %}" onclick="return confirm('Are you sure you want to leave this group?');">Leave</a>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li>You are not a member of any group yet.</li>
+        {% endfor %}
+    </ul>
+    <h2>Available Groups to Join</h2>
+    <ul>
+        {% for group in available_groups %}
+            <li>
+                <strong>{{ group.name }}</strong>
+                {% if group.visibility == 'public' %}
+                    <a href="{% url 'freewill:join_public_group' group.id %}">Join Group</a>
+                {% elif group.visibility == 'invite' %}
+                    <a href="{% url 'freewill:request_to_join_group' group.id %}">Request to Join</a>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No groups available to join.</li>
+        {% endfor %}
+    </ul>
+    <h2>Your Join Requests</h2>
+    <ul>
+        {% for join_request in user_join_requests %}
+        <li>
+            You requested to join <strong>{{ join_request.group.name }}</strong> on {{ join_request.created_at }}.
+            <a href="{% url 'freewill:delete_join_request' join_request.id %}" onclick="return confirm('Are you sure you want to delete this join request?');">Delete</a>
+        </li>
+        {% empty %}
+        <li>You have not submitted any join requests.</li>
+        {% endfor %}
+    </ul>
+    <h2>Group Invitations</h2>
+    <div class="invitation-notification">
+        {% if pending_invitations %}
+            <ul>
+                {% for group in pending_invitations %}
+                    <li>
+                        You have been invited to join <strong>{{ group.name }}</strong>.
+                        <a href="{% url 'freewill:accept_invite' group.id %}?user_id={{ request.user.id }}">Accept</a>
+                    </li>
+                {% empty %}
+                    <li>No pending group invitations.</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No pending group invitations.</p>
+        {% endif %}
+    </div>
+    <a href="{% url 'freewill:create_group' %}">Create a New Group</a>
+{% endblock %}

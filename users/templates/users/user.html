@@ -1,11 +1,11 @@
-{% extends 'chipin/base.html' %}
+{% extends 'freewill/base.html' %}
 {% load static %}
-{% block title %}User Management{% endblock %}
+{% block title %}User Settings - FreeWill{% endblock %}
 
 {% block content %} 
     <h2>Welcome {{ request.profile.nickname }}</h2>
     <p>This page is for user management functions.</p>
-    <a href="{% url 'chipin:home' %}">Click through to ChipIn Functions</a>
+    <a href="{% url 'freewill:home' %}">Click through to FreeWill</a>
     <form method="post">
         {% csrf_token %}
         <h3>Edit Info</h3>

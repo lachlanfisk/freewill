@@ -1,8 +1,8 @@
-{% extends 'chipin/base.html' %}
+{% extends 'freewill/base.html' %}
 {% load static %}
-{% block title %}Register - ChipIn{% endblock %}
+{% block title %}Register - FreeWill{% endblock %}
 {% block content %}
-    <h1>Register for ChipIn</h1>
+    <h1>Register for FreeWill</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}

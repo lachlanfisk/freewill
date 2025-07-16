@@ -5,18 +5,18 @@ from .models import Comment
 class GroupCreationForm(forms.ModelForm):
     class Meta:
         model = Group
-        fields = ['name']
+        fields = ['name', 'visibility']
 
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user = user
 
     def save(self, commit=True):
         group = super().save(commit=False)
-        group.admin = self.user  # Assign the logged-in user as the admin
+        group.admin = self.user
         if commit:
             group.save()
-            group.members.add(self.user)  # Add the admin to the members list
+            group.members.add(self.user)
         return group
     
 

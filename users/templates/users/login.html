@@ -1,6 +1,6 @@
-{% extends 'chipin/base.html' %}
+{% extends 'FreeWill/base.html' %}
 {% load static %}
-{% block title %}Login - ChipIn{% endblock %}
+{% block title %}Login - FreeWill{% endblock %}
 {% block content %}
     <div class="login-container">
         <form id="login-form" action="{% url 'users:login' %}" method="post" onsubmit="return executeRecaptcha();">
