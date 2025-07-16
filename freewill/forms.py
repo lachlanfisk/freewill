@@ -18,10 +18,13 @@ class GroupCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         group = super().save(commit=False)
+        is_new = group.pk is None  # True iSf this is a new group
+
         group.owner = self.user
         if commit:
             group.save()
-            GroupMember.objects.create(user=self.user, group=group, role='owner')  # Creator is admin by default
+            if is_new:
+                GroupMember.objects.create(user=self.user, group=group, role='owner')
         return group
     
 

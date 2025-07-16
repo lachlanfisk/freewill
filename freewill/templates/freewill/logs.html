@@ -1,0 +1,43 @@
+{% extends 'freewill/base.html' %}
+{% block title %}FreeWill Social - {{ group.name }} - Logs{% endblock %}
+{% block content %}
+<h1>Group Logs for {{ group.name }}</h1>
+
+<form method="get">
+    <label>User:
+        <select name="user">
+            <option value="">All</option>
+            {% for user in users %}
+                <option value="{{ user.id }}" {% if user.id|stringformat:"s" == selected_user %}selected{% endif %}>
+                    {{ user.profile.nickname }}
+                </option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label>Event:
+        <select name="event">
+            <option value="">All</option>
+            {% for key, label in event_choices %}
+                <option value="{{ key }}" {% if key == selected_event %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <button type="submit">Filter</button>
+</form>
+
+<ul>
+    {% for log in logs %}
+        <li>
+            [{{ log.timestamp|date:"Y-m-d H:i" }}] 
+            {% if log.user %}<strong>{{ log.user.profile.nickname }}</strong>{% endif %}
+            - {{ log.message }}
+        </li>
+    {% empty %}
+        <li>No log entries found.</li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'freewill:group_detail' group.id %}">Back to group</a>
+{% endblock %}

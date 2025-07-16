@@ -55,3 +55,31 @@ class Comment(models.Model):
 
     def __str__(self):
         return f"{self.user.username}: {self.content[:20]}..."  # Show only first 20 chars for preview
+
+class GroupLog(models.Model):
+    EVENT_CHOICES = [
+        ('created', 'Group Created'),
+        ('joined', 'User Joined'),
+        ('left', 'User Left'),
+        ('comment_edited', 'Comment Edited'),
+        ('comment_deleted', 'Comment Deleted'),
+        ('invited', 'User Invited'),
+        ('invite_accepted', 'Invite Accepted'),
+        ('invite_denied', 'Invite Denied'),
+        ('join_requested', 'Join Requested'),
+        ('join_request_deleted', 'Join Request Deleted'),
+        ('join_request_accepted', 'Join Request Accepted'),
+        ('join_request_denied', 'Join Request Denied'),
+        ('role_changed', 'Role Changed'),
+        ('kicked', 'User Kicked'),
+        ('banned', 'User Banned'),
+        ('unbanned', 'User Unbanned'),
+        ('updated', 'Group Updated'),
+        ('ownership_transferred', 'Ownership Transferred'),
+    ]
+
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='logs')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='log_entries')
+    event_type = models.CharField(max_length=30, choices=EVENT_CHOICES)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)

@@ -1,5 +1,5 @@
 {% extends 'freewill/base.html' %}
-{% block title %}Freewill - {{ group.name }}{% endblock %}
+{% block title %}FreeWill Social - {{ group.name }}{% endblock %}
 {% block content %}
     <h1>{{ group.name }}</h1>
     <p>Owner: {{ group.owner }}</p>
@@ -14,6 +14,7 @@
     <!-- Only display "Invite Users" link to the group administrator -->
     {% if request.user == group.admin or request.user == group.owner %}
         <a href="{% url 'freewill:invite_users' group.id %}">Invite Users</a>
+        <p><a href="{% url 'freewill:group_logs' group.id %}">View Group Logs</a></p>
     {% endif %}
 
 
@@ -58,14 +59,11 @@
                     <option value="ban">Ban</option>
                 </select>
             </form>
-
             {% else %}
-            <span>({{ membership.role|title }})</span>
             {% endif %}
         </li>
         {% endfor %}
         </ul>
-
         {% if request.user == group.admin or request.user == group.owner %}
             {% if banned_users %}
             <h2>Banned Users</h2>
