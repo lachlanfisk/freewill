@@ -29,6 +29,7 @@ urlpatterns = [
     'password-reset/',
     auth_views.PasswordResetView.as_view(
         email_template_name='registration/password_reset_email.html',
+        html_email_template_name='registration/password_reset_email.html',
         subject_template_name='registration/password_reset_subject.txt',
     ),
     name='password_reset',

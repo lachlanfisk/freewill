@@ -150,14 +150,6 @@ def user(request):
             messages.success(request, 'Profile updated successfully.')
             return redirect('users:user')
 
-        # --- Handle password change ---
-        elif 'change_password' in request.POST and password_form.is_valid():
-            user = password_form.save()
-            update_session_auth_hash(request, user)
-            send_password_change_email(user, request)
-            messages.success(request, 'Your password was successfully updated!')
-            return redirect('users:user')
-
         # --- Handle email change request ---
         elif 'change_email' in request.POST and email_form.is_valid():
             new_email = email_form.cleaned_data['new_email']
@@ -230,6 +222,7 @@ def change_password_view(request):
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)  # Prevent logout
+            send_password_change_email(user, request)
             messages.success(request, "Your password has been changed successfully.")
             return redirect('users:user')  # or wherever you want to redirect after
     else:

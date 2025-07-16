@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Deleted a group</title>
+    <!--Email templates don't allow linking stylesheets-->
+    <style>
+    body {
+        background-color: #f8e0ff;
+        color: #8060a0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .title {
+        text-align: center;
+        font-size: 1.8rem;
+        color: #8060a0;
+        display: block;
+        width: 100%;
+    }
+    .wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .wide-card {
+        background-color: #f0d0ff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 800px;
+        box-sizing: border-box;
+        color: #8060a0;
+    }
+    .threeway-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #8060a0;
+        border-radius: 10px;
+        background-color: #f8e0ff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    .threeway-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .threeway-row > div {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+    .threeway-info {
+        margin: 0;
+        line-height: 1.5;
+    }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="wide-card">
+            <h2 class="title">Deleted a group</h2>
+            <p>Hi {{ username }},</p>
+            <p>You recently deleted group {{ group_name }}.</p>
+            <p>Below are the details:</p>
+            <div class="threeway-card">
+                <div class="threeway-row">
+                    <div><div class="threeway-info">IP Address: {{ ip }}</div></div>
+                    <div><div class="threeway-info">Time: {{ timestamp }}</div></div>
+                    <div><div class="threeway-info">Device/Browser: {{ user_agent }}</div></div>
+                </div>
+            </div>
+            <p>If you don't recognise this action, change your password and contact support immediately.</p>
+            <p>Regards,</p>
+            <p>FreeWill Social</p>
+        </div>
+    </div>
+</body>
+</html>

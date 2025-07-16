@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to FreeWill</title>
+    <!--Email templates don't allow linking stylesheets-->
+    <style>
+    body {
+        background-color: #f8e0ff;
+        color: #8060a0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+    .title {
+        text-align: center;
+        font-size: 1.8rem;
+        color: #8060a0;
+        display: block;
+        width: 100%;
+    }
+    .wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 2rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    .card {
+        background-color: #f0d0ff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+        color: #8060a0;
+    }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="card">
+            <h2 class="title">Welcome to FreeWill</h2>
+            <p>Hi {{ username }},</p>
+            <p>Your email has been successfully verified and your account is now active.</p>
+            <p>We're excited to have you on board!</p>
+            <p>Regards,</p>
+            <p>FreeWill Users</p>
+        </div>
+    </div>
+</body>
+</html>

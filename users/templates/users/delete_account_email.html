@@ -1,9 +1,8 @@
-{% autoescape off %}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Reset Your Password</title>
+    <title>Confirm Your Account Deletion</title>
     <!--Email templates don't allow linking stylesheets-->
     <style>
     body {
@@ -39,6 +38,36 @@
         box-sizing: border-box;
         color: #8060a0;
     }
+    .threeway-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid #8060a0;
+        border-radius: 10px;
+        background-color: #f8e0ff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+    .threeway-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .threeway-row > div {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+    .threeway-info {
+        margin: 0;
+        line-height: 1.5;
+    }
     .app-button {
         all: unset;
         display: block;
@@ -72,18 +101,24 @@
 <body>
     <div class="wrapper">
         <div class="wide-card">
-            <h2 class="title">Reset Your Password</h2>
-            <p>Hi {{ user.get_username }},</p>
-            <p>We received a request to reset your password at FreeWill.</p>
-            <p>Click the button below to choose a new password:</p>
-            <a href="{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}" class="app-button full-width">Reset Password</a>
-            <p>If the button doesn't work, copy and paste this link into your browser:</p>
-            <p>{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}</p>
-            <p>If you don't recognise this action, ignore this email. Someone likely typed in the wrong email.</p>
+            <h2 class="title">Confirm Your Account Deletion</h2>
+            <p>Hi {{ username }},</p>
+            <p>Click the button below to confirm deletion of your account:</p>
+            <a href="{{ confirm_url }}" class="app-button full-width">Delete My Account</a>
+            <p>If the button doesn't work, you can also copy and paste this link into your browser:</p>
+            <p>{{ confirm_url }}</p>
+            <p>Below are the request details:</p>
+            <div class="threeway-card">
+                <div class="threeway-row">
+                    <div><div class="threeway-info">IP Address: {{ ip }}</div></div>
+                    <div><div class="threeway-info">Time: {{ timestamp }}</div></div>
+                    <div><div class="threeway-info">Device/Browser: {{ user_agent }}</div></div>
+                </div>
+            </div>
+            <p>If you don't recognise this action, change your password and contact support immediately.</p>
             <p>Regards,</p>
             <p>FreeWill Users</p>
         </div>
     </div>
 </body>
 </html>
-{% endautoescape %}
