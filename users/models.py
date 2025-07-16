@@ -18,7 +18,8 @@ def save_user_profile(sender, instance, **kwargs):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    nickname = models.CharField(max_length=30, unique=True, null=False, blank=False)
+    nickname = models.CharField(max_length=30, unique=False, null=False, blank=False)
+    pending_email = models.EmailField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)    

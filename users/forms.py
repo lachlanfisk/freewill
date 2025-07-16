@@ -1,12 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
-from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
+from .models import Profile
+
 
 class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -34,26 +31,17 @@ class UserRegistrationForm(UserCreationForm):
             profile = user.profile
             profile.nickname = user.username
             profile.save()
-
-            # Sends user verification email
-
-            self.send_confirmation_email(user)
         return user
 
-    def send_confirmation_email(self, user):
-        from django.urls import reverse
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
 
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        link = f"http://localhost:8000/users/verify-email/{uid}/{token}/"
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['nickname']
 
-        subject = 'Confirm your email address'
-        message =(
-
-            f"Hi {user.username},\n\n"
-            f"Thanks for registering! Please confirm your email address by clicking the link below:\n\n"
-            f"{link}\n\n"
-            f"Regards,\nLF Project"
-
-        )
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
+class EmailChangeForm(forms.Form):
+    new_email = forms.EmailField(label="New Email")

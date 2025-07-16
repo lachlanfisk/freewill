@@ -6,6 +6,27 @@
     <h2>Welcome {{ request.profile.nickname }}</h2>
     <p>This page is for user management functions.</p>
     <a href="{% url 'chipin:home' %}">Click through to ChipIn Functions</a>
+    <form method="post">
+        {% csrf_token %}
+        <h3>Edit Info</h3>
+    <form method="post">
+        {% csrf_token %}
+        {{ user_form.as_p }}
+        {{ profile_form.as_p }}
+        <button type="submit" name="update_profile">Update Profile</button>
+    </form>
     <p></p>
+    <body>Email Address: {{ request.user.email }}</body>
+    <form method="post">
+        {% csrf_token %}
+        {{ email_form.as_p }}
+        <button type="submit" name="change_email">Request Email Change</button>
+    </form>
+    <form method="post">
+        {% csrf_token %}
+        {{ password_form.as_p }}
+        <button type="submit" name="change_password">Change Password</button>
+    <p><strong>Account Created:</strong> {{ created_at }}</p>
+    </form>
     <a href="{% url 'users:delete_account' %}" class="btn btn-danger">Delete Account</a> <!-- Delete Account Page -->
 {% endblock %}
