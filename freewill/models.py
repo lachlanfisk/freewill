@@ -1,18 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
-class GroupMember(models.Model):
+class GroupMember(models.Model): # Saves user's roles
     ROLE_CHOICES = [
         ('read', 'Read-Only'),
         ('comment', 'Comment'),
         ('admin', 'Admin'),
         ('owner', 'Owner'),
-    ]
+    ] # Default roles
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='group_memberships')
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='read')
-    banned = models.BooleanField(default=False)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='read') # Roles for permissions
+    joined_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         unique_together = ('user', 'group')
@@ -29,17 +30,17 @@ class Group(models.Model):
     ]
     
     default_role = models.CharField(max_length=10, choices=DEFAULT_ROLE_CHOICES, default='read')
-    name = models.CharField(max_length=100)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_groups', default=29)
+    name = models.CharField(max_length=100) # Unique name
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_groups', default=29) # One owner, at creation
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public')
     members = models.ManyToManyField(User, through='GroupMember')
     banned_users = models.ManyToManyField(User, related_name='banned_from_groups', blank=True)
-    nickname = models.CharField(max_length=100, blank=True)
+    nickname = models.CharField(max_length=100, blank=True) # Non-unique name
 
     def __str__(self):
         return self.name
 
-class GroupInvitation(models.Model):
+class GroupInvitation(models.Model): # Invitations
     group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='invitations')
     invited_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_invites')
     inviter = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_group_invites')
@@ -48,22 +49,27 @@ class GroupInvitation(models.Model):
     def __str__(self):
         return f"{self.invited_user} invited to {self.group} by {self.inviter}"
 
-class GroupJoinRequest(models.Model):
+class GroupJoinRequest(models.Model): # Join requests for closed groups
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='join_requests')
-    is_approved = models.BooleanField(default=False)
-    votes = models.ManyToManyField(User, related_name='votes', blank=True)  # Tracks users who voted
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # User who posted the comment
-    group = models.ForeignKey(Group, related_name='comments', on_delete=models.CASCADE)  # Group associated with the comment
-    content = models.TextField()  # The comment content
-    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp when the comment was posted
-    updated_at = models.DateTimeField(auto_now=True)  # Timestamp for the latest update
+    CHANNEL_CHOICES = [
+        ('communications', 'Communications'),
+        ('announcements', 'Announcements'),
+    ] # Channels
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, related_name='comments', on_delete=models.CASCADE)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES, default='communications') # Communications or Announcements
 
     def __str__(self):
-        return f"{self.user.username}: {self.content[:20]}..."  # Show only first 20 chars for preview
+        return f"{self.user.username}: {self.content[:20]}..."
+
 
 class GroupLog(models.Model):
     EVENT_CHOICES = [
@@ -87,10 +93,10 @@ class GroupLog(models.Model):
         ('unbanned', 'User Unbanned'),
         ('updated', 'Group Updated'),
         ('ownership_transferred', 'Ownership Transferred'),
-    ]
+    ] # Log Categories
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='logs')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='log_entries')
-    event_type = models.CharField(max_length=30, choices=EVENT_CHOICES)
+    event_type = models.CharField(max_length=30, choices=EVENT_CHOICES) # Log category
     message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(auto_now_add=True) # Time of the event

@@ -12,26 +12,52 @@ from django.utils.html import strip_tags
 
 signer = TimestampSigner()
 
+# Get IP
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR', 'Unknown')
+    return ip
+
+# Emails
+
 def send_confirmation_email(user):
+    
+    # Link token and UID
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
+    
+    # Confirmation link
     link = f"http://localhost:8000/users/verify-email/{uid}/{token}/"
+
+    # HTML Template
     html_content = render_to_string('users/confirmation_email.html', {
         'username': user.username,
         'confirmation_link': link
     })
     text_content = strip_tags(html_content)
+
+    # Save and send email
     email = EmailMultiAlternatives(
+
+        #Subject
         subject = 'Confirm Email',
+
+        # Body
         body = text_content,
+
+        # Sent from freewill.users@gmail.com
+        # ENSURE .env FILE IS PRESENT
         from_email = settings.DEFAULT_FROM_EMAIL,
+
+        # To user email
         to = [user.email],
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
-
-
-# Send confirmation success email
 
 def send_confirmation_success_email(user):
     html_content = render_to_string('users/confirmation_success_email.html',{
@@ -51,12 +77,13 @@ def send_confirmation_success_email(user):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
-# Send login email
-
 def send_login_email(user, request):
+
+    # Get users IP, Browser and Time
     ip = get_client_ip(request)
     user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
     timestamp = now().strftime("%Y-%m-%d %H:%M:%S %Z")
+
     html_content = render_to_string('users/login_email.html', {
         'username': user.username,
         'ip': ip,
@@ -81,8 +108,6 @@ def send_login_email(user, request):
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
-
-# Send profile update email
 
 def send_profile_update_email(user, request, changes):
     ip = get_client_ip(request)
@@ -118,9 +143,6 @@ def send_profile_update_email(user, request, changes):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
-
-# Send email change email
-
 def send_email_change_email(user, request, new_email):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
@@ -144,8 +166,6 @@ def send_email_change_email(user, request, new_email):
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
-
-# Send password change email
 
 def send_email_change_success_email(user, request, new_email):
     ip = get_client_ip(request)
@@ -177,8 +197,6 @@ def send_email_change_success_email(user, request, new_email):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
-# Send password change email
-
 def send_password_change_email(user, request):
     ip = get_client_ip(request)
     timestamp = now().strftime("%Y-%m-%d %H:%M:%S %Z")
@@ -207,8 +225,6 @@ def send_password_change_email(user, request):
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
-
-# Send delete account email
 
 def send_delete_account_email(user, request):
     token = signer.sign(str(user.id))
@@ -245,8 +261,6 @@ def send_delete_account_email(user, request):
     email.attach_alternative(html_content, "text/html")
     email.send()
 
-# Send delete account success email
-
 def send_delete_account_success_email(token, request):
     user_id = signer.unsign(token, max_age=60 * 60)
     user = User.objects.get(id=user_id)
@@ -277,13 +291,3 @@ def send_delete_account_success_email(token, request):
     )
     email.attach_alternative(html_content, "text/html")
     email.send()
-    
-# Get IP
-
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('REMOTE_ADDR', 'Unknown')
-    return ip

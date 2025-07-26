@@ -6,12 +6,13 @@
 <div class="wrapper">
     <h1 class="supertitle">Your Groups</h1>
     <div class="wide-card">
-    {% if user_groups %}
+    {% if had_groups %}
     <!--Search-->
         <form method="get">
             <input type="text" name="search" class="form-input" placeholder="Search your groups by name..." value="{{ request.GET.search }}">
         </form>
         <!--Groups the user is in-->
+    {% if user_groups %}
     {% for entry in user_groups %}
         <div class="threeway-card">
             <div class="threeway-row">
@@ -32,6 +33,9 @@
             </div>
         </div>
     {% endfor %}
+    {% else %}
+        No groups matched your search for "{{ search_query }}".
+    {% endif %}
     {% else %}
         You are in no groups. Go to "Create Group" to create a group, or "Browse Groups" to find Groups to join
     {% endif %}

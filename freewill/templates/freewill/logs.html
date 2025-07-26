@@ -3,6 +3,7 @@
 {% block title %}FreeWill Social - {{ group.name }} - Logs{% endblock %}
 
 {% block content %}
+{% if is_admin %}
 <div class="wrapper">
 <h1 class="supertitle">{{ group.name }} - Logs</h1>
     <div class="wide-card">
@@ -54,4 +55,11 @@
     {% endfor %}
     </div>
 </div>
+{% else %}
+<div class="wrapper">
+    <div class="card">
+        You do not have permission to view this page
+    </div>
+</div>
+{% endif %}
 {% endblock %}

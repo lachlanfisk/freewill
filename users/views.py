@@ -25,12 +25,14 @@ from .utils import (
 from freewill.models import GroupJoinRequest
 import requests
 
-# Registers user
+# ----------------------------------------------- Login/Register ---------------------------------------------------------------
 
 def register(request):
+    # Redirects users if logged in
     if request.user.is_authenticated:
         return redirect('users:user')
     else:
+        # Form for user creation
         if request.method == "POST":
             form = UserRegistrationForm(request.POST)
             if form.is_valid():
@@ -42,14 +44,14 @@ def register(request):
             form = UserRegistrationForm()
         return render(request, 'users/register.html', {'form': form})
 
-# Verify user's email
-
 def verify_email(request, uidb64, token):
+    # Gets a valid user and uid
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
+    # Verify Email
     if user and default_token_generator.check_token(user, token):
         user.is_active = True
         user.save()
@@ -61,16 +63,15 @@ def verify_email(request, uidb64, token):
         messages.success(request, "The confirmation link is invalid or has expired.")
         return redirect('users:login')
 
-# Logs user in
-
 def login_view(request):
+    # Redirects users if logged in
     if request.user.is_authenticated:
         return redirect('users:user')
     else:
         if request.method == "POST":
             username = request.POST.get("username")
             password = request.POST.get("password")
-            recaptcha_response = request.POST.get("recaptcha-token")  # Updated
+            recaptcha_response = request.POST.get("recaptcha-token") 
             # Verify reCAPTCHA
             data = {
                 'secret': settings.RECAPTCHA_SECRET_KEY,
@@ -99,13 +100,21 @@ def login_view(request):
                 messages.error(request, "Invalid username or password.")
         return render(request, "users/login.html")
 
-# Account page
+def logout_view(request):
+    # Log user out
+    logout(request)
+    messages.success(request, "Successfully logged out.")
+    return redirect('users:login')
+
+# ----------------------------------------- Home Page --------------------------------------------------------------------
 
 @login_required
 def user(request):
+    # User Home Page
     user = request.user
     profile = user.profile
 
+    # Profile Update Forms
     if request.method == 'POST':
         user_form = UserUpdateForm(request.POST, instance=user)
         profile_form = ProfileUpdateForm(request.POST, instance=profile)
@@ -121,13 +130,14 @@ def user(request):
             'email': user.email,  # For comparison only
         }
 
-        # --- Handle profile updates ---
+        # Handle profile updates
         if 'update_profile' in request.POST and user_form.is_valid() and profile_form.is_valid():
             user_form.cleaned_data.pop('email', None)  # Don't accidentally save email
 
             user_form.save()
             profile_form.save()
 
+            # Get changes for email confirmation
             user.refresh_from_db()
             profile.refresh_from_db()
 
@@ -150,7 +160,7 @@ def user(request):
             messages.success(request, 'Profile updated successfully.')
             return redirect('users:user')
 
-        # --- Handle email change request ---
+        # Handle email change request
         elif 'change_email' in request.POST and email_form.is_valid():
             new_email = email_form.cleaned_data['new_email']
             if new_email != original_data['email']:
@@ -170,34 +180,32 @@ def user(request):
 
     # Get join requests
     user_join_requests = GroupJoinRequest.objects.filter(user=user)
-    context = {
+
+    return render(request, 'users/user.html', {
         'user_form': user_form,
         'profile_form': profile_form,
         'password_form': password_form,
         'email_form': email_form,
         'created_at': user.date_joined,
-        'user_join_requests': user_join_requests,
-    }
-    return render(request, 'users/user.html', context)
+        'user_join_requests': user_join_requests,       
+    })
 
-# Logs user out
+# ----------------------------------------- User Settings -------------------------------------------------------------------
 
-def logout_view(request):
-    logout(request)
-    messages.success(request, "Successfully logged out.")
-    return redirect('users:login')
-
-# Confirm email change
-
+# From Email Link
 def confirm_email_change(request, uidb64, token):
+    # Gets a valid user and uid
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (User.DoesNotExist, ValueError, TypeError):
         user = None
 
+    # Checks if link and user is valid
     if user and default_token_generator.check_token(user, token):
         profile = user.profile
+
+        # Checks if new email is valid
         if profile.pending_email:
             new_email = profile.pending_email
             send_email_change_success_email(user, request, new_email)
@@ -213,10 +221,9 @@ def confirm_email_change(request, uidb64, token):
 
     return redirect('users:user')
 
-# Change Password
-
 @login_required
 def change_password_view(request):
+    # Send password change form
     if request.method == 'POST':
         form = PasswordChangeForm(user=request.user, data=request.POST)
         if form.is_valid():
@@ -224,13 +231,10 @@ def change_password_view(request):
             update_session_auth_hash(request, user)  # Prevent logout
             send_password_change_email(user, request)
             messages.success(request, "Your password has been changed successfully.")
-            return redirect('users:user')  # or wherever you want to redirect after
+            return redirect('users:user')
     else:
         form = PasswordChangeForm(user=request.user)
-    
     return render(request, 'users/change_password.html', {'form': form})
-
-# Delete account request
 
 @login_required
 def delete_account(request):
@@ -246,11 +250,11 @@ def delete_account(request):
             messages.error(request, "Incorrect password. Please try again.")
     return render(request, 'users/delete_account.html')
 
-# Confirm account deletion
-
+# From Email Link
 def confirm_delete_account(request):
     user = request.user
     token = request.GET.get('token')
+    # Tries valid user and link
     try:
         send_delete_account_success_email(token, request)
         user.delete()
@@ -260,4 +264,3 @@ def confirm_delete_account(request):
     except (BadSignature, SignatureExpired, User.DoesNotExist):
         messages.error(request, "Invalid or expired link.")
         return redirect('users:login')
-

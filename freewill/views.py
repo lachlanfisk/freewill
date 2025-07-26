@@ -15,60 +15,32 @@ from .utils import log_event
 @login_required
 def home(request):
     user = request.user
-    user = request.user
-    search_query = request.GET.get('search', '')  # <-- this line
+    search_query = request.GET.get('search', '')
+    all_group_memberships = GroupMember.objects.filter(user=user)
 
-    user_groups = Group.objects.filter(group_memberships__user=user)
-    available_groups = Group.objects.exclude(id__in=user_groups).filter(visibility__in=['public', 'invite']).exclude(banned_users=user)
-
-    if search_query:
-        user_groups = user_groups.filter(
-            Q(name__icontains=search_query) | Q(nickname__icontains=search_query)
-        )
-        available_groups = available_groups.filter(
-            Q(name__icontains=search_query) | Q(nickname__icontains=search_query)
-        )
-
-    # Step 1: Get GroupMember records for the current user
+    # Get relevant group memberships with group info
     group_memberships = GroupMember.objects.select_related('group').filter(user=user)
 
-    # Step 2: Apply search filter to GroupMember if neede
-
-    # Step 3: Build list of groups with roles attached
-    user_groups = []
-    for membership in group_memberships:
-        group = membership.group
-        group.role = membership.role  # Attach the role to the group
-        user_groups.append(group)
-
-    # Step 4: Get available groups (not joined, visible, not banned)
-    joined_group_ids = [group.id for group in user_groups]
-    available_groups = Group.objects.exclude(id__in=joined_group_ids)\
-        .filter(visibility__in=['public', 'invite'])\
-        .exclude(banned_users=user)
-
     if search_query:
-        available_groups = available_groups.filter(name__icontains=search_query)
+        group_memberships = group_memberships.filter(
+            Q(group__name__icontains=search_query) |
+            Q(group__nickname__icontains=search_query)
+        )
 
-    # Step 5: Get invitations
-    pending_invitations = GroupInvitation.objects.filter(invited_user=user)
-
-    user_groups = []
-    for membership in group_memberships:
-        user_groups.append({
-            'group': membership.group,
-            'role': membership.get_role_display()
-        })
+    user_groups = [{
+        'group': membership.group,
+        'role': membership.get_role_display()
+    } for membership in group_memberships]
 
     return render(request, 'freewill/home.html', {
         'user_groups': user_groups,
-        'available_groups': available_groups,
-        'pending_invitations': pending_invitations,
         'search_query': search_query,
+        'had_groups': all_group_memberships.exists(),
     })
 
 @login_required
 def create_group(request):
+    # Create Group Form
     if request.method == 'POST':
         form = GroupCreationForm(request.POST, user=request.user)
         if form.is_valid():
@@ -88,14 +60,17 @@ def create_group(request):
 def join_public_group(request, group_id):
     group = get_object_or_404(Group, id=group_id)
 
+    # Can't join if banned
     if request.user in group.banned_users.all():
         messages.error(request, "You are banned from this group.")
         return redirect('freewill:home')
 
+    # Can only join public
     if group.visibility != 'public':
         messages.error(request, "This group is not public.")
         return redirect('freewill:home', group_id=group.id)
 
+    # Can only join groups not in
     if request.user in group.members.all():
         messages.info(request, "You are already a member of this group.")
     else:
@@ -122,6 +97,7 @@ def group_detail(request, group_id):
 
     group_memberships = GroupMember.objects.filter(group=group).select_related('user')
 
+    # Render Page
     has_admin = GroupMember.objects.filter(group=group, role='admin').exists()
     return render(request, 'freewill/group_detail.html', {
         'group': group,
@@ -150,7 +126,7 @@ def available_groups(request):
     # Filter available groups
     groups = Group.objects.exclude(id__in=excluded_ids)
 
-    # Optional: Search filter
+    # Search filter
     query = request.GET.get('search', '')
     if query:
         groups = groups.filter(name__icontains=query)
@@ -162,6 +138,7 @@ def available_groups(request):
 @login_required
 def leave_group(request, group_id):
     group = get_object_or_404(Group, id=group_id)
+
     # Check if the user is a member of the group
     if request.user in group.members.all():
         group.members.remove(request.user)  # Remove the user from the group
@@ -174,10 +151,10 @@ def leave_group(request, group_id):
 #----------------------------------------------------- Comments -----------------------------------------------------
 
 @login_required
-def communication(request, group_id, edit_comment_id=None):
+def comments(request, group_id, channel, edit_comment_id=None):
     group = get_object_or_404(Group, id=group_id)
 
-    # Check membership and role
+    # Check role
     if request.user == group.owner:
         user_role = 'owner'
     else:
@@ -188,37 +165,42 @@ def communication(request, group_id, edit_comment_id=None):
             messages.error(request, "You are not a member of this group.")
             return redirect('freewill:home')
 
-    # Load comments
-    comments = group.comments.select_related('user__profile').order_by('-created_at')
-    comment_to_edit = None
+    # Determine posting rights
+    if channel == 'communications':
+        can_post = user_role in ['comment', 'admin', 'owner']
+    elif channel == 'announcements':
+        can_post = user_role in ['admin', 'owner']
+    else:
+        return redirect('freewill:group_detail', group_id=group.id)
 
+    # Get comments for the channel
+    comments = group.comments.filter(channel=channel).select_related('user__profile').order_by('-created_at')
+
+    comment_to_edit = None
     if edit_comment_id:
-        comment_to_edit = get_object_or_404(Comment, id=edit_comment_id, group=group)
+        comment_to_edit = get_object_or_404(Comment, id=edit_comment_id, group=group, channel=channel)
         if comment_to_edit.user != request.user and user_role not in ['admin', 'owner']:
             messages.error(request, "You don't have permission to edit this comment.")
-            return redirect('freewill:communication', group_id=group.id)
+            return redirect('freewill:comments', group_id=group.id, channel=channel)
 
-    # Handle form POST
+    # Comment form
     if request.method == 'POST':
-        if comment_to_edit:
-            old_content = comment_to_edit.content
-            form = CommentForm(request.POST, instance=comment_to_edit)
-        else:
-            form = CommentForm(request.POST)
+        form = CommentForm(request.POST, instance=comment_to_edit) if comment_to_edit else CommentForm(request.POST)
 
         if form.is_valid():
-            if user_role in ['comment', 'admin', 'owner']:
+            if can_post:
                 comment = form.save(commit=False)
                 comment.user = request.user
                 comment.group = group
+                comment.channel = channel
                 comment.save()
-                if comment_to_edit:
-                    log_event(group, request.user, 'comment_edited', f"Edited comment from '{old_content}' to '{comment.content}'")
-                else:
-                    log_event(group, request.user, 'comment_posted', f"New comment: '{comment.content}'")
-                return redirect('freewill:communication', group_id=group.id)
+
+                action = 'comment_edited' if comment_to_edit else 'comment_posted'
+                log_event(group, request.user, action, f"User {'Edited' if comment_to_edit else 'Posted'} in {channel}: '{comment.content}'")
+
+                return redirect('freewill:comments', group_id=group.id, channel=channel)
             else:
-                messages.error(request, "You don't have permission to comment.")
+                messages.error(request, "You don't have permission to post here.")
     else:
         form = CommentForm(instance=comment_to_edit) if comment_to_edit else CommentForm()
 
@@ -228,20 +210,23 @@ def communication(request, group_id, edit_comment_id=None):
         'form': form,
         'comment_to_edit': comment_to_edit,
         'user_role': user_role,
+        'can_post': can_post,
+        'channel': channel,
     })
 
 @login_required
-def delete_comment(request, comment_id):
-    comment = get_object_or_404(Comment, id=comment_id)
-    group = comment.group
+def delete_comment(request, group_id, channel, comment_id):
+    group = get_object_or_404(Group, id=group_id)
+    comment = get_object_or_404(Comment, id=comment_id, group=group, channel=channel)
+    # Only comment owner or admin can delete
     if (
         comment.user == request.user or
-        request.user == comment.group.owner or
-        GroupMember.objects.filter(group=comment.group, user=request.user, role='admin').exists()
-    ):  # Allow author or group admin to delete
-        log_event(group, request.user, 'comment_deleted', f"User deleted comment by {comment.user.username}, '{comment.content}'")
+        request.user == group.owner or
+        GroupMember.objects.filter(group=group, user=request.user, role='admin').exists()
+    ):
+        log_event(group, request.user, 'comment_deleted', f"User deleted comment by {comment.user.username} in {comment.channel}: '{comment.content}'")
         comment.delete()
-    return redirect('freewill:communication', group_id=comment.group.id)
+    return redirect('freewill:comments', group_id=group.id, channel=channel)
 
 #-------------------------------------------------- Administration --------------------------------------------------
 
@@ -252,10 +237,12 @@ def invite_users(request, group_id):
     is_admin = GroupMember.objects.filter(group=group, user=request.user, role='admin').exists()
     is_public = group.visibility == 'public'
 
+    # Admins can only invite
     if not (is_owner or is_admin or is_public):
         messages.error(request, "You do not have permission to perform this action.")
         return redirect('freewill:group_detail', group_id=group.id)
 
+    # List of invitees
     invited_user_ids = group.invitations.values_list('invited_user_id', flat=True)
     users_not_in_group = User.objects.exclude(
         id__in=group.members.values_list('id', flat=True)
@@ -265,6 +252,7 @@ def invite_users(request, group_id):
         id__in=invited_user_ids
     )
 
+    # Send invite
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         invited_user = get_object_or_404(User, id=user_id)
@@ -299,26 +287,35 @@ def respond_to_invite(request, group_id):
     user_id = request.GET.get('user_id')
     action = request.GET.get('action')  # 'accept' or 'deny'
 
+    # Link must be valid
     if str(request.user.id) != user_id:
         messages.error(request, "Invalid invitation link.")
+        invitation.delete()
         return redirect(request.META.get('HTTP_REFERER', 'freewill:home'))
 
-    if request.user in group.banned_users.all():
-        messages.error(request, "You are banned from this group.")
-        return redirect(request.META.get('HTTP_REFERER', 'freewill:home'))
-
-    try:
-        invitation = GroupInvitation.objects.get(group=group, invited_user=request.user)
-    except GroupInvitation.DoesNotExist:
-        messages.error(request, "You do not have an active invitation to this group.")
-        return redirect(request.META.get('HTTP_REFERER', 'freewill:home'))
-
+    # Accept
     if action == 'accept':
+
+        # Can't be invited to banned users
+        if request.user in group.banned_users.all():
+            messages.error(request, "You are banned from this group.")
+            invitation.delete()
+            return redirect(request.META.get('HTTP_REFERER', 'freewill:home'))
+
+        # Confirms invitiation
+        try:
+            invitation = GroupInvitation.objects.get(group=group, invited_user=request.user)
+        except GroupInvitation.DoesNotExist:
+            messages.error(request, "You do not have an active invitation to this group.")
+            return redirect(request.META.get('HTTP_REFERER', 'freewill:home'))
+    
         group.members.add(request.user)
         invitation.delete()
         GroupJoinRequest.objects.filter(group=group, user=request.user).delete()
         log_event(group, request.user, 'invite_accepted', f"User accepted the invite")
         messages.success(request, f'You have successfully joined the group \"{group.name}\".')
+    
+    # Deny
     elif action == 'deny':
         invitation.delete()
         log_event(group, request.user, 'invite_denied', f"User denied the invite")
@@ -353,20 +350,23 @@ def request_to_join_group(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     referer = request.META.get('HTTP_REFERER', reverse('freewill:available_groups'))
 
+    # Banned users can't request
     if request.user in group.banned_users.all():
         messages.error(request, "You are banned from this group.")
         return redirect(referer)
 
+    # Users dont request to join Open or Hidden groups
     if group.visibility != 'invite':
         messages.error(request, "You cannot request to join this group.")
         return redirect(referer)
 
+    # Users don't request to join groups they are in
     if request.user in group.members.all():
         messages.info(request, "You are already a member of this group.")
         return redirect(referer)
 
     # Proceed to create the join request
-    join_request, created = GroupJoinRequest.objects.get_or_create(user=request.user, group=group)
+    created = GroupJoinRequest.objects.get_or_create(user=request.user, group=group)
     if created:
         log_event(group, request.user, 'join_requested', "User requested to join the group")
         messages.success(request, "Your request to join the group has been submitted.")
@@ -379,6 +379,7 @@ def request_to_join_group(request, group_id):
 def delete_join_request(request, request_id):
     join_request = get_object_or_404(GroupJoinRequest, id=request_id, user=request.user)
     group = join_request.group
+
     # Ensure the logged-in user can only delete their own join requests
     if join_request.user == request.user:
         join_request.delete()
@@ -393,17 +394,24 @@ def handle_join_request(request, group_id, request_id, action):
     group = get_object_or_404(Group, id=group_id)
     is_owner = request.user == group.owner
     is_admin = GroupMember.objects.filter(group=group, user=request.user, role='admin').exists()
+
+    # User must be admin
     if not (is_owner or is_admin):
         messages.error(request, "Only the group admin can manage join requests.")
         return redirect('freewill:group_detail', group_id=group.id)
+    
     group = get_object_or_404(Group, id=group_id)
     join_request = get_object_or_404(GroupJoinRequest, id=request_id)
+
+    # Approve
     if action == 'approve':
         group.members.add(join_request.user)
         log_event(group, request.user, 'join_request_accepted', f"{join_request.user.username} was accepted")
         join_request.delete()
         GroupInvitation.objects.filter(group=group, invited_user=join_request.user).delete()
         messages.success(request, f"{join_request.user.profile.nickname} has been added to the group.")
+
+    # Reject
     elif action == 'reject':
         log_event(group, request.user, 'join_request_denied', f"{join_request.user.username} was denied")
         join_request.delete()
@@ -417,6 +425,7 @@ def handle_join_request(request, group_id, request_id, action):
 def group_logs(request, group_id):
     group = get_object_or_404(Group, id=group_id)
     
+    # User must be admin
     is_admin = GroupMember.objects.filter(group=group, user=request.user, role='admin').exists()
     if request.user != group.owner and not is_admin:
         messages.error(request, "You do not have permission to view this page.")
@@ -439,6 +448,7 @@ def group_logs(request, group_id):
         'event_choices': GroupLog.EVENT_CHOICES,
         'selected_user': user_id,
         'selected_event': event_type,
+        'is_admin': is_admin,
     })
 
 @login_required
@@ -502,6 +512,7 @@ def edit_group_settings(request, group_id):
         messages.error(request, "Only the group owner can edit settings.")
         return redirect('freewill:group_detail', group_id=group.id)
 
+    # Group Setting Form
     if request.method == 'POST':
         form = GroupCreationForm(request.POST, instance=group, user=request.user)
         if form.is_valid():
@@ -518,6 +529,7 @@ def edit_group_settings(request, group_id):
 def transfer_ownership(request, group_id):
     group = get_object_or_404(Group, id=group_id)
 
+    # Only owner can delete
     if request.user != group.owner:
         return redirect('freewill:group_detail', group_id=group.id)
 
@@ -534,6 +546,7 @@ def transfer_ownership(request, group_id):
             return redirect('freewill:transfer_ownership', group_id=group.id)
 
         try:
+            # New owner must be admin
             new_owner = User.objects.get(id=new_owner_id)
 
             if not admin_members.filter(user=new_owner).exists():
@@ -557,11 +570,13 @@ def transfer_ownership(request, group_id):
             except GroupMember.DoesNotExist:
                 GroupMember.objects.create(user=new_owner, group=group, role='owner')
 
+            # Alert old owner/log event
             log_event(group, request.user, 'ownership_transferred', f"Transferred ownership to {new_owner.username}")
             send_transfer_ownership_email(user, request, group)
             messages.success(request, f"Ownership transferred to {new_owner.profile.nickname}.")
             return redirect('freewill:group_detail', group_id=group.id)
 
+        # If not a valid user
         except User.DoesNotExist:
             messages.error(request, "User not found.")
             return redirect('freewill:transfer_ownership', group_id=group.id)
@@ -575,12 +590,14 @@ def transfer_ownership(request, group_id):
 def delete_group(request, group_id):
     group = get_object_or_404(Group, id=group_id)
 
+    # Only owner can delete
     if request.user != group.owner:
         messages.error(request, "Only the owner can delete this group.")
         return redirect('freewill:group_detail', group_id=group.id)
 
+    # Delete Group
     if request.method == 'POST':
-        password = request.POST.get('password')
+        password = request.POST.get('password') # Authenticate Password
         user = authenticate(username=request.user.username, password=password)
         if user:
             group.delete()

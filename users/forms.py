@@ -12,7 +12,7 @@ class UserRegistrationForm(UserCreationForm):
         model = User
         fields = ['first_name', 'last_name', 'email', 'username', 'password1', 'password2']
 
-    # Only allows unique emails
+    # Doesn't allows unique emails
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -33,15 +33,21 @@ class UserRegistrationForm(UserCreationForm):
             profile.save()
         return user
 
+# Update Username, First name or Last name
+
 class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name']
 
+# Update Nickname
+
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['nickname']
+
+# Update Email
 
 class EmailChangeForm(forms.Form):
     new_email = forms.EmailField(label="New Email")

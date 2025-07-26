@@ -3,6 +3,7 @@
 {% block title %}FreeWill Social - {{ group.name }} - Invites{% endblock %}
 
 {% block content %}
+{% if is_admin or is_owner %}
 <div class="wrapper">
     <!--Send Invite-->
     <div class="wide-card">
@@ -22,7 +23,6 @@
         </form>
     </div>
     <!--Outgoing Invites-->
-{% if is_admin or is_owner %}
 {% if outgoing_invitations %}
     <div class="wide-card">
         <h2 class="title">{{ group.name }} - Sent Invitations</h2>
@@ -50,5 +50,11 @@
         </div>
     </div>
 {% endif %}
+{% else %}
+<div class="wrapper">
+    <div class="card">
+        You do not have permission to view this page
+    </div>
+</div>
 {% endif %}
 {% endblock %}

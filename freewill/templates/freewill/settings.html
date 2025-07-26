@@ -3,6 +3,7 @@
 {% block title %}FreeWill Social - {{ group.name }} - Edit Group Settings{% endblock %}
 
 {% block content %}
+{% if request.user == group.owner %}
 <div class="wrapper">
     <!--Settings-->
     <div class="wide-card">
@@ -27,4 +28,11 @@
         <a href="{% url 'freewill:group_detail' group.id %}" class="app-button full-width subtle">Back to Group</a>
     </div>
 </div>
+{% else %}
+<div class="wrapper">
+    <div class="card">
+        You do not have permission to view this page
+    </div>
+</div>
+{% endif %}
 {% endblock %}

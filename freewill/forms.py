@@ -6,11 +6,11 @@ class GroupCreationForm(forms.ModelForm):
         ('read', 'Read-Only'),
         ('comment', 'Comment'),
     ]
-    default_role = forms.ChoiceField(choices=DEFAULT_ROLE_CHOICES, label="Default Role for Members")
+    default_role = forms.ChoiceField(choices=DEFAULT_ROLE_CHOICES, label="Default Role for Members") # Default Role
 
     class Meta:
         model = Group
-        fields = ['name', 'nickname', 'visibility']  # <-- added nickname
+        fields = ['name', 'nickname', 'visibility']  # Group Settings
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,6 +20,7 @@ class GroupCreationForm(forms.ModelForm):
         group = super().save(commit=False)
         is_new = group.pk is None
 
+        # Sets creation user as owner
         group.owner = self.user
         if commit:
             group.save()

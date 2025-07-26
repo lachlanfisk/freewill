@@ -3,6 +3,7 @@
 {% block title %}FreeWill Social - {{ group.name }} - Transfer Ownership{% endblock %}
 
 {% block content %}
+{% if request.user == group.owner %}
 <div class="wrapper">
     <!--Transfer Ownership-->
     <div class="wide-card danger-card">
@@ -26,4 +27,11 @@
         </div>
     </div>
 </div>
+{% else %}
+<div class="wrapper">
+    <div class="card">
+        You do not have permission to view this page
+    </div>
+</div>
+{% endif %}
 {% endblock %}

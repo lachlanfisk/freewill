@@ -22,10 +22,11 @@
             <a>Your role in this group: {{ user_role|title }}</a>
         </div>
     </div>
+    <!--Channels-->
     <div class="wide-card">
         <h2 class="title">Channels</h2>
-        <a class="app-button full-width">Announcements</a>
-        <a class="app-button full-width" href="{% url 'freewill:communication' group.id %}">Communications</a>
+        <a class="app-button full-width" href="{% url 'freewill:comments' group.id 'communications' %}">Communications</a>
+        <a class="app-button full-width" href="{% url 'freewill:comments' group.id 'announcements' %}">Announcements</a>
     </div>
     <!--Members-->
     <div class="wide-card">
@@ -164,5 +165,10 @@
     {% endif %}
 </div>
 {% else %}
+<div class="wrapper">
+    <div class="card">
+        You do not have permission to view this page
+    </div>
+</div>
 {% endif %}
 {% endblock %}

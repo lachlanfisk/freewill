@@ -3,6 +3,7 @@
 {% block title %}FreeWill - {{ group.name }} - Delete{% endblock %}
 
 {% block content %}
+{% if request.user == group.owner %}
 <div class="wrapper">
     <!--Delete Group-->
     <div class="card danger-card">
@@ -17,4 +18,11 @@
         <a href="{% url 'freewill:group_detail' group.id %}" class="app-button full-width">Cancel</a>
     </div>
 </div>
+{% else %}
+<div class="wrapper">
+    <div class="card">
+        You do not have permission to view this page
+    </div>
+</div>
+{% endif %}
 {% endblock %}

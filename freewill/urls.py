@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Join/Create/View Groups
    path("", views.home, name="home"),
    path('create_group/', views.create_group, name='create_group'),
    path('group/<int:group_id>/join/', views.join_public_group, name='join_public_group'),
@@ -9,6 +10,7 @@ urlpatterns = [
    path('group/<int:group_id>/leave/', views.leave_group, name='leave_group'),
    path('groups_available/', views.available_groups, name='available_groups'),
 
+   # Admin Tools
    path('group/<int:group_id>/invite/', views.invite_users, name='invite_users'),
    path('group/<int:group_id>/invite-response/', views.respond_to_invite, name='respond_to_invite'),
    path('group/<int:group_id>/invite/<int:invitation_id>/delete/', views.delete_group_invitation, name='delete_group_invitation'),
@@ -21,7 +23,8 @@ urlpatterns = [
    path('group/<int:group_id>/transfer_ownership/', views.transfer_ownership, name='transfer_ownership'),
    path('group/<int:group_id>/delete/', views.delete_group, name='delete_group'),
 
-   path('group/<int:group_id>/communication/', views.communication, name='communication'),
-   path('group/<int:group_id>/communication/<int:edit_comment_id>/', views.communication, name='edit_comment'),
-   path('comment/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
+   # Comment Pages
+   path('group/<int:group_id>/<str:channel>/', views.comments, name='comments'),
+   path('group/<int:group_id>/<str:channel>/<int:edit_comment_id>/', views.comments, name='edit_comment'),
+   path('group/<int:group_id>/<str:channel>/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
 ]
