@@ -341,7 +341,7 @@ def delete_group_invitation(request, group_id, invitation_id):
         return redirect('freewill:group_detail', group_id=group.id)
 
     invitation.delete()
-    log_event(group, request.user, 'invite_deleted', f"The invite to {invitation.user.username} was deleted")
+    log_event(group, request.user, 'invite_deleted', f"The invite to {invitation.invited_user.username} was deleted")
     messages.success(request, f"Invitation to {invitation.invited_user.username} deleted.")
     return redirect('freewill:group_detail', group_id=group.id)
 
